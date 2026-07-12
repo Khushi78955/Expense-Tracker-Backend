@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js"
 import expenseRoutes from "./routes/expenseRoutes.js";
+import budgetRoutes from "./routes/budgetRoutes.js"
 
 
 const app = express();
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoutes)
 app.use("/expenses", expenseRoutes);
+app.use("/budgets", budgetRoutes);
 
 app.use((req, res) => {
     res.status(404).json({
