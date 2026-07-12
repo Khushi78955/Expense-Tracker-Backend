@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt"
 import pool from "../config/db.js"
+import jwt from "jsonwebtoken"
 import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
 
 const SALT_ROUNDS = 10;
@@ -24,6 +25,7 @@ export const registerUser = async (userData) => {
     )
     return result.rows[0]
 }
+
 
 
 export const loginUser = async ({email, password}) => {
@@ -61,3 +63,42 @@ export const loginUser = async ({email, password}) => {
         refreshToken
     }
 }
+
+
+
+
+export const refreshAccessToken = async (refreshToken) => {
+    if (!refreshToken) {
+        throw new Error("Refresh token missing");
+    }
+    const payload = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const result = await pool.query(
+        "SELECT id, name, email, monthly_budget, refresh_token FROM users WHERE id = $1",
+        [payload.id]
+    );
+    if (result.rows.length === 0) {
+        throw new Error("User not found");
+    }
+
+    const user = result.rows[0];
+    if (user.refresh_token !== refreshToken) {
+        throw new Error("Invalid refresh token");
+    }
+
+    return generateAccessToken(user);
+};
+
+
+
+export const logoutUser = async (userId) => {
+    await pool.query(
+        `UPDATE users
+         SET refresh_token = NULL
+         WHERE id = $1`,
+        [userId]
+    );
+};
